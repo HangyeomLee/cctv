@@ -3,14 +3,12 @@
 
 {% block header %}
 <link rel="stylesheet" type="text/css" href="{% static 'css/test_page_style.css' %}">
-
 <link href="https://vjs.zencdn.net/7.2.3/video-js.css" rel="stylesheet">
 <link href="https://vjs.zencdn.net/7.2.3/video-js.css" rel="stylesheet">
 {% endblock %}
 
 {% block content %}
 <!-- Video.js 스크립트 -->
-<!-- seonggyu git init -->
 <script src="https://vjs.zencdn.net/7.2.3/video.js"></script>
 <!-- Video.js HLS 플러그인 -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/videojs-contrib-hls/5.14.1/videojs-contrib-hls.js"></script>
@@ -30,8 +28,7 @@
                     </video>
                 </div>
                 <div data-channel="{{ cctv.cctv_channel }}" class="imageBox subMainImageBox">
-                    <img id="cctv_{{ cctv.cctv_channel }}" class="testimg" src="static\image\overlayphoto.jpeg">
-                    </img>
+                    <img id="4" class="testimg" src="/static/image/overlayphoto.jpeg">
                 </div>
             </div>
         </article>
@@ -40,7 +37,7 @@
             <div class="infoBox display-flex">
                 <div>
                     <p class="font14">현재시각</p>
-                    <span id="current-time">15시 00분 33</span>
+                    <span id="current-time">15시 00분 33초</span>
                 </div>
             </div>
             <div class="infoBox display-flex m-t20">
@@ -74,66 +71,6 @@
 {% endblock %}
 
 {% block script %}
-<!-- JQuery -->
-
-
-<!-- <script>
-  $(document).ready(function() {
-      // 페이지가 로드되면 바로 데이터 가져오기
-      updateCctvData();
-      // 2초마다 데이터 업데이트하기
-      setInterval(updateCctvData, 2000); // 2초마다 업데이트
-  });
-
-  // AJAX를 사용하여 CCTV 데이터 업데이트
-  function updateCctvData() {
-      $.ajax({
-          url: '/update-cctv-data', // CCTV 데이터 업데이트를 위한 URL
-          type: 'GET',
-          success: function(data) {
-              // 성공적으로 데이터를 받았을 때 실행할 코드
-              // let detectedPeople = data.message; // 받은 데이터에서 감지된 사람 수 가져오기
-              // $('#cctvData').text(detectedPeople); // 페이지에 감지된 사람 수 업데이트
-          },
-          error: function(xhr, status, error) {
-              // 오류 발생 시 실행할 코드
-              console.error(error);
-          }
-      }); 
-  }
-
-</script>
-
-<script>
-  $(document).ready(function() {
-      // 페이지가 로드되면 바로 데이터 가져오기
-      updateAreaDetectedPeople();
-
-      // 2초마다 데이터 업데이트하기
-      setInterval(updateAreaDetectedPeople, 2000); // 2초마다 업데이트
-  });
-
-  // AJAX를 사용하여 지역의 감지된 사람 수 업데이트
-  function updateAreaDetectedPeople() {
-      // 현재 페이지의 URL에서 area_id 추출
-      let areaId = window.location.pathname.split('/')[2]; // 예: '/update-area-detected-people/3/'에서 '3'을 추출
-
-      // AJAX 요청 보내기
-      $.ajax({
-          url: `/update-area-detected-people/${areaId}/`, // 지역의 감지된 사람 수를 업데이트하는 URL
-          type: 'GET',
-          success: function(data) {
-              // 성공적으로 데이터를 받았을 때 실행할 코드
-              let detectedPeople = data.detected_people; // 받은 데이터에서 감지된 사람 수 가져오기
-              $('#areaData').text(detectedPeople+"명"); // 페이지에 감지된 사람 수 업데이트
-          },
-          error: function(xhr, status, error) {
-              // 오류 발생 시 실행할 코드
-              console.error(error);
-          }
-      }); 
-  }
-</script> -->
 
 <script>
     // 시간 업데이트
@@ -189,34 +126,18 @@
             player.autoplay('muted');
         });
     };
-
 </script>
 
 <script>
-        $(document).ready(function() {
-            function fetchAndUpdateImage() {
-                $.ajax({
-                    url: '/fetch-and-save-image/',
-                    type: 'GET',
-                    success: function(response) {
-                        if (response.message === 'Image fetched and saved successfully') {
-                            // 업데이트된 이미지를 로드하기 위해 캐시 방지용 쿼리 매개변수 추가
-                            var newSrc = '/static/image/testcctvimg.png?' + new Date().getTime();
-                            $('.testimg').attr('src', newSrc);
-                            $('#areaData').text(response.object_count+'명');
-                        } else {
-                            console.error('Error:', response.error);
-                        }
-                    },
-                    error: function(xhr, status, error) {
-                        console.error('AJAX Error:', status, error);
-                    }
-                });
-            }
+    $(document).ready(function() {
+        function fetchAndUpdateImage() {
+            // 이미지 URL을 직접 사용하여 갱신, 캐시 방지 쿼리 매개변수 추가
+            var imageUrl = 'http://183.103.118.114:65401/Streams/1/4/ReceiveData?timestamp=' + new Date().getTime();
+            $('.testimg').attr('src', imageUrl);
+        }
 
-            // 2초마다 fetchAndUpdateImage 함수 호출
-            setInterval(fetchAndUpdateImage, 2000);
-        });
-    </script>
+        setInterval(fetchAndUpdateImage, 1000);
+    });
+</script>
 
 {% endblock %}

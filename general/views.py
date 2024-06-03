@@ -110,6 +110,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.conf import settings
 
+
 class FetchAndSaveImageView(APIView):
     def get(self, request):
         try:
