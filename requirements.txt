@@ -1,5 +1,5 @@
 amqp==5.2.0
-APScheduler @ file:///C:/b/abs_eewol9hhy6/croot/apscheduler_1668706376042/work
+APScheduler==3.9.1
 asgiref==3.8.1
 billiard==4.2.0
 celery==5.4.0
@@ -20,13 +20,13 @@ kombu==5.3.7
 pillow==10.3.0
 prompt-toolkit==3.0.43
 python-dateutil==2.9.0.post0
-pytz @ file:///C:/b/abs_6ap4tsz1ox/croot/pytz_1713974360290/work
+pytz==2024.1
 requests==2.31.0
-six @ file:///tmp/build/80754af9/six_1644875935023/work
+six==1.16.0
 sqlparse==0.5.0
 typing_extensions==4.11.0
 tzdata==2024.1
-tzlocal @ file:///C:/b/abs_961jok6k6w/croot/tzlocal_1668627423616/work
+tzlocal==5.0.1
 urllib3==2.2.1
 vine==5.1.0
 wcwidth==0.2.13

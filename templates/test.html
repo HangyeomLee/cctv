@@ -201,7 +201,7 @@
                     success: function(response) {
                         if (response.message === 'Image fetched and saved successfully') {
                             // 업데이트된 이미지를 로드하기 위해 캐시 방지용 쿼리 매개변수 추가
-                            var newSrc = 'static/image/testcctvimg.png?' + new Date().getTime();
+                            var newSrc = '/static/image/testcctvimg.png?' + new Date().getTime();
                             $('.testimg').attr('src', newSrc);
                             $('#areaData').text(response.object_count+'명');
                         } else {
