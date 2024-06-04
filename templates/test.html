@@ -22,13 +22,11 @@
             <!-- Django 템플릿 코드 -->
             <div class="display-flex-top m-b10">
                 <div data-channel="{{ cctv.cctv_channel }}" class="imageBox subMainImageBox">
-                    <video id="cctv_{{ cctv.cctv_channel }}" class="video-js vjs-default-skin videobox">
-                        <source src="{{ cctv.http_url }}" type="application/x-mpegURL">
-                        Your browser does not support the video tag.
-                    </video>
+                    <img id="4" class="testimg" src="/static/image/overlayphoto.jpeg">
                 </div>
                 <div data-channel="{{ cctv.cctv_channel }}" class="imageBox subMainImageBox">
-                    <img id="4" class="testimg" src="/static/image/overlayphoto.jpeg">
+                    <img id="cctv_{{ cctv.cctv_channel }}" class="testimg testvis" src="static\image\testcctvimg.png">
+                    </img>
                 </div>
             </div>
         </article>
@@ -130,13 +128,40 @@
 
 <script>
     $(document).ready(function() {
-        function fetchAndUpdateImage() {
-            // 이미지 URL을 직접 사용하여 갱신, 캐시 방지 쿼리 매개변수 추가
-            var imageUrl = 'http://183.103.118.114:65401/Streams/1/4/ReceiveData?timestamp=' + new Date().getTime();
-            $('.testimg').attr('src', imageUrl);
+        function UpdateLiveImage() {
+            $.ajax({
+                url: '/fetch-and-save-image/',
+                type: 'GET',
+                success: function(response) {
+                    if (response.message === 'Image fetched and saved successfully') {
+                        var newSrc = '/static/image/testcctvimg.png?' + new Date().getTime();
+                        $('.testvis').attr('src', newSrc);
+                        $('#areaData').text(response.object_count+'명');
+                    } else {
+                        console.error('Error:', response.error);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('AJAX Error:', status, error);
+                }
+            });
         }
 
-        setInterval(fetchAndUpdateImage, 1000);
+        // 2초마다 fetchAndUpdateImage 함수 호출
+        setInterval(UpdateLiveImage, 1000);
+    });
+</script>
+
+<script>
+    $(document).ready(function() {
+        function UpdateTestImage() {
+            // 이미지 URL을 직접 사용하여 갱신, 캐시 방지 쿼리 매개변수 추가
+            var imageUrl = 'http://183.103.118.114:65403/Snapshot/1/RemoteImageCapture?ImageFormat=2?' + new Date().getTime();
+            $('#4').attr('src', imageUrl);
+
+
+        }
+        setInterval(UpdateTestImage, 400);
     });
 </script>
 
