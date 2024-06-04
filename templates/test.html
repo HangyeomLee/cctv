@@ -21,12 +21,17 @@
             <h2 class="font20 m-b10">{{area.area_name}} 구역 상세</h2>
             <!-- Django 템플릿 코드 -->
             <div class="display-flex-top m-b10">
-                <div data-channel="{{ cctv.cctv_channel }}" class="imageBox subMainImageBox">
+                <div data-channel="{{ cctv.cctv_channel }}" class="imageBox subMainImageBox" style="position: relative;">
                     <img id="4" class="testimg" src="/static/image/overlayphoto.jpeg">
                 </div>
-                <div data-channel="{{ cctv.cctv_channel }}" class="imageBox subMainImageBox">
-                    <img id="cctv_{{ cctv.cctv_channel }}" class="testimg testvis" src="static\image\testcctvimg.png">
-                    </img>
+                <div data-channel="{{ cctv.cctv_channel }}" class="imageBox subMainImageBox" style="position: relative;">
+                    <img id="cctv_{{ cctv.cctv_channel }}" class="testimg testvis" src="/static/image/testcctvimg.png">
+                    <canvas id="drawCanvas" class="draw-canvas"></canvas>
+                    <div class="button-container">
+                        <button id="button1" class="btn">Draw</button>
+                        <button id="button2" class="btn" disabled>Done</button>
+                        <button id="button3" class="btn" disabled>Delete</button>
+                    </div>
                 </div>
             </div>
         </article>
@@ -63,6 +68,12 @@
                     <span>55,555명</span>
                 </div>
             </div>
+            <div class="infoBox display-flex m-t20">
+                <div>
+                    <p class="font14">그리드 영역 내부 객체 수</p>
+                    <span id="grid-object-count">0명</span>
+                </div>
+            </div>
         </article>
     </div>
 </section>
@@ -72,29 +83,18 @@
 
 <script>
     // 시간 업데이트
-    // 현재 시간 업데이트 함수
     function updateTime() {
-        // 현재 시간을 가져옴
         let now = new Date();
-
-        // 시간, 분, 초를 가져와서 문자열로 변환
         let hours = now.getHours();
         let minutes = now.getMinutes();
         let seconds = now.getSeconds();
-
-        // 10보다 작은 숫자의 경우 앞에 0을 붙여주기
         hours = hours < 10 ? "0" + hours : hours;
         minutes = minutes < 10 ? "0" + minutes : minutes;
         seconds = seconds < 10 ? "0" + seconds : seconds;
-
-        // 현재 시각을 시:분:초 형식으로 표시
         let currentTimeString = hours + "시 " + minutes + "분 " + seconds + "초";
-
-        // 현재 시각을 해당 span 요소에 업데이트
         document.getElementById("current-time").innerText = currentTimeString;
     }
 
-    // 페이지 로드 시간과 1초마다 시간 업데이트
     document.addEventListener("DOMContentLoaded", function () {
         updateTime();
         setInterval(updateTime, 1000);
@@ -103,24 +103,20 @@
 
 <!-- 비디오 플레이어 설정 스크립트 -->
 <script>
-    // 페이지 로드가 완료된 후 실행되는 함수
     document.addEventListener("DOMContentLoaded", function () {
-        // 모든 비디오 요소를 찾아서 Video.js로 초기화
         const videos = document.querySelectorAll(".video-js");
         videos.forEach(videoElement => {
-            const player = videojs(videoElement); // Video.js 플레이어 초기화
+            const player = videojs(videoElement);
             player.ready(function () {
-                // 플레이어가 준비되면 자동으로 재생 시작
                 this.play();
             });
         });
     });
 
-    // 페이지 로드시 비디오 자동 재생
     window.onload = function () {
         const videos = document.querySelectorAll(".video-js");
         videos.forEach(videoElement => {
-            const player = videojs(videoElement); // Video.js 플레이어 초기화
+            const player = videojs(videoElement);
             player.autoplay('muted');
         });
     };
@@ -136,7 +132,7 @@
                     if (response.message === 'Image fetched and saved successfully') {
                         var newSrc = '/static/image/testcctvimg.png?' + new Date().getTime();
                         $('.testvis').attr('src', newSrc);
-                        $('#areaData').text(response.object_count+'명');
+                        $('#areaData').text(response.object_count + '명');
                     } else {
                         console.error('Error:', response.error);
                     }
@@ -146,8 +142,7 @@
                 }
             });
         }
-
-        // 2초마다 fetchAndUpdateImage 함수 호출
+        
         setInterval(UpdateLiveImage, 1000);
     });
 </script>
@@ -155,14 +150,159 @@
 <script>
     $(document).ready(function() {
         function UpdateTestImage() {
-            // 이미지 URL을 직접 사용하여 갱신, 캐시 방지 쿼리 매개변수 추가
             var imageUrl = 'http://183.103.118.114:65403/Snapshot/1/RemoteImageCapture?ImageFormat=2?' + new Date().getTime();
             $('#4').attr('src', imageUrl);
-
-
         }
-        setInterval(UpdateTestImage, 400);
+        setInterval(UpdateTestImage, 500);
     });
+</script>
+
+<script>
+    function checkIfPointInPolygon(point, polygon) {
+        let x = point.x, y = point.y;
+        let inside = false;
+        for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+            let xi = polygon[i].x, yi = polygon[i].y;
+            let xj = polygon[j].x, yj = polygon[j].y;
+            let intersect = ((yi > y) !== (yj > y)) &&
+                (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+            if (intersect) inside = !inside;
+        }
+        return inside;
+    }
+
+    function updateGridObjectCount() {
+        $.ajax({
+            url: 'http://61.75.117.152:4567/combined',
+            type: 'GET',
+            success: function(response) {
+                if (response.text) {
+                    let objectCount = 0;
+                    const polygon = points.map(p => ({x: p.x, y: p.y}));
+
+                    // 이미지와 캔버스의 크기
+                    const imgWidth = $('#cctv_{{ cctv.cctv_channel }}')[0].naturalWidth;
+                    const imgHeight = $('#cctv_{{ cctv.cctv_channel }}')[0].naturalHeight;
+                    const canvasWidth = $('#drawCanvas').width();
+                    const canvasHeight = $('#drawCanvas').height();
+
+                    // 비율 계산
+                    const widthRatio = canvasWidth / imgWidth;
+                    const heightRatio = canvasHeight / imgHeight;
+
+                    for (let key in response.text) {
+                        if (key.startsWith('Object')) {
+                            let position = response.text[key].match(/\((\d+),\s*(\d+)\)/);
+                            if (position) {
+                                let x = parseInt(position[1]) * widthRatio;
+                                let y = parseInt(position[2]) * heightRatio;
+                                if (checkIfPointInPolygon({x, y}, polygon)) {
+                                    objectCount++;
+                                }
+                            }
+                        }
+                    }
+                    $('#grid-object-count').text(objectCount + '명');
+                } else {
+                    console.error('Error:', response.error);
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('AJAX Error:', status, error);
+            }
+        });
+    }
+
+    let updateInterval;
+
+    // 기존 그리드 드로잉 코드
+    let drawing = false;
+    let gridExists = false;
+    let points = [];
+
+    const canvas = document.getElementById('drawCanvas');
+    const ctx = canvas.getContext('2d');
+    const img = document.getElementById('cctv_{{ cctv.cctv_channel }}');
+
+    // Set canvas size to match the image size
+    canvas.width = img.clientWidth;
+    canvas.height = img.clientHeight;
+
+    // Adjust canvas position to overlay the image
+    canvas.style.position = 'absolute';
+    canvas.style.left = img.offsetLeft + 'px';
+    canvas.style.top = img.offsetTop + 'px';
+
+    // Initial button states
+    $('#button1').css('background-color', '#007bff').prop('disabled', false);
+    $('#button2').css('background-color', 'lightgray').prop('disabled', true);
+    $('#button3').css('background-color', 'lightgray').prop('disabled', true);
+
+    // Draw button click event
+    $('#button1').click(function() {
+        if (gridExists) return;
+        drawing = true;
+        alert("그리드 영역 그리기를 시작합니다.");
+        $('#button1').css('background-color', 'lightgray').prop('disabled', true);
+        $('#button2').css('background-color', '#007bff').prop('disabled', false);
+    });
+
+    // Done button click event
+    $('#button2').click(function() {
+        if (points.length > 1) {
+            const firstPoint = points[0];
+            const lastPoint = points[points.length - 1];
+            ctx.beginPath();
+            ctx.moveTo(lastPoint.x, lastPoint.y);
+            ctx.lineTo(firstPoint.x, firstPoint.y);
+            ctx.strokeStyle = 'yellow';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            alert("그리드 영역 그리기가 완료되었습니다.");
+            gridExists = true;
+            $('#button2').css('background-color', 'lightgray').prop('disabled', true);
+            $('#button3').css('background-color', '#007bff').prop('disabled', false);
+
+            // 실시간 객체 수 업데이트 시작
+            updateInterval = setInterval(updateGridObjectCount, 1000);
+        }
+        drawing = false;
+    });
+
+    // Delete button click event
+    $('#button3').click(function() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        points = [];
+        gridExists = false;
+        alert("그리드 영역을 삭제합니다.");
+        $('#button3').css('background-color', 'lightgray').prop('disabled', true);
+        $('#button1').css('background-color', '#007bff').prop('disabled', false);
+
+        // 객체 수 초기화 및 업데이트 멈춤
+        $('#grid-object-count').text('0명');
+        clearInterval(updateInterval);
+    });
+
+    // Mouse click event to draw points and lines
+    canvas.addEventListener('mousedown', (e) => {
+        if (!drawing) return;
+        const rect = canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+
+        if (points.length > 0) {
+            const lastPoint = points[points.length - 1];
+            ctx.beginPath();
+            ctx.moveTo(lastPoint.x, lastPoint.y);
+            ctx.lineTo(x, y);
+            ctx.strokeStyle = 'yellow';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
+
+        points.push({ x, y });
+    });
+
 </script>
 
 {% endblock %}
