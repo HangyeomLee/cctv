@@ -287,6 +287,7 @@ $('#deleteButton').click(function() {
 
     // 객체 수 초기화 및 업데이트 멈춤
     $('#grid-object-count').text('0명');
+    sendObjectCount(0);
     clearInterval(updateInterval);
 });
 
