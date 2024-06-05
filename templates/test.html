@@ -28,9 +28,9 @@
                     <img id="cctv_{{ cctv.cctv_channel }}" class="testimg testvis" src="/static/image/testcctvimg.png">
                     <canvas id="drawCanvas" class="draw-canvas"></canvas>
                     <div class="button-container">
-                        <button id="button1" class="btn">Draw</button>
-                        <button id="button2" class="btn" disabled>Done</button>
-                        <button id="button3" class="btn" disabled>Delete</button>
+                        <button id="drawButton" class="btn">Draw</button>
+                        <button id="doneButton" class="btn" disabled>Done</button>
+                        <button id="deleteButton" class="btn" disabled>Delete</button>
                     </div>
                 </div>
             </div>
@@ -58,7 +58,7 @@
             <div class="infoBox display-flex m-t20">
                 <div>
                     <p class="font14">구역 넓이</p>
-                    <span>55,555m^2</span>
+                    <span id = "grid-area">55,555m^2</span>
                 </div>
             </div>
 
@@ -150,7 +150,7 @@
 <script>
     $(document).ready(function() {
         function UpdateTestImage() {
-            var imageUrl = 'http://183.103.118.114:65403/Snapshot/1/RemoteImageCapture?ImageFormat=2?' + new Date().getTime();
+            var imageUrl = 'http://183.103.118.114:65402/Snapshot/1/RemoteImageCapture?ImageFormat=2?' + new Date().getTime();
             $('#4').attr('src', imageUrl);
         }
         setInterval(UpdateTestImage, 500);
@@ -234,21 +234,21 @@
     canvas.style.top = img.offsetTop + 'px';
 
     // Initial button states
-    $('#button1').css('background-color', '#007bff').prop('disabled', false);
-    $('#button2').css('background-color', 'lightgray').prop('disabled', true);
-    $('#button3').css('background-color', 'lightgray').prop('disabled', true);
+    $('#drawButton').css('background-color', '#007bff').prop('disabled', false);
+    $('#doneButton').css('background-color', 'lightgray').prop('disabled', true);
+    $('#deleteButton').css('background-color', 'lightgray').prop('disabled', true);
 
     // Draw button click event
-    $('#button1').click(function() {
+    $('#drawButton').click(function() {
         if (gridExists) return;
         drawing = true;
         alert("그리드 영역 그리기를 시작합니다.");
-        $('#button1').css('background-color', 'lightgray').prop('disabled', true);
-        $('#button2').css('background-color', '#007bff').prop('disabled', false);
+        $('#drawButton').css('background-color', 'lightgray').prop('disabled', true);
+        $('#doneButton').css('background-color', '#007bff').prop('disabled', false);
     });
 
     // Done button click event
-    $('#button2').click(function() {
+    $('#doneButton').click(function() {
         if (points.length > 1) {
             const firstPoint = points[0];
             const lastPoint = points[points.length - 1];
@@ -258,25 +258,40 @@
             ctx.strokeStyle = 'yellow';
             ctx.lineWidth = 2;
             ctx.stroke();
-            alert("그리드 영역 그리기가 완료되었습니다.");
-            gridExists = true;
-            $('#button2').css('background-color', 'lightgray').prop('disabled', true);
-            $('#button3').css('background-color', '#007bff').prop('disabled', false);
 
-            // 실시간 객체 수 업데이트 시작
-            updateInterval = setInterval(updateGridObjectCount, 1000);
+            // Prompt the user for the real area size
+            let realArea = prompt("해당 영역의 실면적을 입력해주세요. (m^2)");
+
+            if (realArea) {
+                // Update the area size in the UI
+                $('#grid-area').text(realArea + 'm^2');
+                alert("그리드 영역 그리기가 완료되었습니다.");
+                gridExists = true;
+                $('#doneButton').css('background-color', 'lightgray').prop('disabled', true);
+                $('#deleteButton').css('background-color', '#007bff').prop('disabled', false);
+
+                // 실시간 객체 수 업데이트 시작
+                updateInterval = setInterval(updateGridObjectCount, 1000);
+            } else {
+                alert("실면적을 입력하지 않았습니다. 그리드 영역 그리기가 취소되었습니다.");
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                points = [];
+                drawing = false;
+                $('#doneButton').css('background-color', 'lightgray').prop('disabled', true);
+                $('#drawButton').css('background-color', '#007bff').prop('disabled', false);
+            }
         }
         drawing = false;
     });
 
     // Delete button click event
-    $('#button3').click(function() {
+    $('#deleteButton').click(function() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         points = [];
         gridExists = false;
         alert("그리드 영역을 삭제합니다.");
-        $('#button3').css('background-color', 'lightgray').prop('disabled', true);
-        $('#button1').css('background-color', '#007bff').prop('disabled', false);
+        $('#deleteButton').css('background-color', 'lightgray').prop('disabled', true);
+        $('#drawButton').css('background-color', '#007bff').prop('disabled', false);
 
         // 객체 수 초기화 및 업데이트 멈춤
         $('#grid-object-count').text('0명');
@@ -302,7 +317,6 @@
 
         points.push({ x, y });
     });
-
 </script>
 
 {% endblock %}

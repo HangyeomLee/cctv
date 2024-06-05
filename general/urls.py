@@ -12,5 +12,5 @@ urlpatterns = [
     path('update-cctv-data/', ExternalAPIView.as_view(), name='update_cctv_data'),
     path('update-area-detected-people/<int:area_id>/', UpdateAreaDetectedPeople.as_view(), name='update_area_detected_people'),
     path("test/", views.testing_view, name = "test_page"),
-    path('fetch-and-save-image/', FetchAndSaveImageView.as_view(), name='fetch_and_save_image')
+    path('fetch-and-save-image/', FetchAndSaveImageView.as_view(), name='fetch_and_save_image'),
 ]
