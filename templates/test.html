@@ -271,7 +271,7 @@ $('#doneButton').click(function() {
         $('#deleteButton').css('background-color', '#007bff').prop('disabled', false);
 
         // 실시간 객체 수 업데이트 시작
-        updateInterval = setInterval(updateGridObjectCount, 1000);
+        updateInterval = updateGridObjectCount();
     }
     drawing = false;
 });
