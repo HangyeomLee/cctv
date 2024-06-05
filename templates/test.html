@@ -154,6 +154,21 @@ function checkIfPointInPolygon(point, polygon) {
     return inside;
 }
 
+function sendObjectCount(objectCount) {
+    $.ajax({
+        url: 'http://61.75.117.152:4567/gridppl',
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({ object_count: objectCount }),
+        success: function(response) {
+            console.log('Success:', response);
+        },
+        error: function(xhr, status, error) {
+            console.error('Error:', error);
+        }
+    });
+}
+
 function updateGridObjectCount() {
     $.ajax({
         url: 'http://61.75.117.152:4567/combined',
@@ -184,6 +199,7 @@ function updateGridObjectCount() {
                     }
                 }
                 $('#grid-object-count').text(objectCount + '명');
+                sendObjectCount(objectCount);
             } else {
                 console.error('Error: Invalid response structure', response);
             }
