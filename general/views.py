@@ -111,10 +111,10 @@ from rest_framework import status
 from django.conf import settings
 
 class FetchAndSaveImageView(APIView):
-    def get(self, request):
+    def get(self, request, pk):
         try:
             # 외부 API URL
-            external_api_url = "http://61.75.117.152:4567/combined"
+            external_api_url = f"http://61.75.117.152:4567/combined/{pk}"
 
             # 외부 API에 GET 요청 보내기
             response = requests.get(external_api_url)

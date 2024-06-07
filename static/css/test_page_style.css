@@ -39,3 +39,8 @@
 .button-container .btn:hover {
     background-color: #0056b3;
 }
+
+
+.input-wide {
+    width: 100px;
+}
