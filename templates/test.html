@@ -4,7 +4,6 @@
 {% block header %}
 <link rel="stylesheet" type="text/css" href="{% static 'css/test_page_style.css' %}">
 <link href="https://vjs.zencdn.net/7.2.3/video-js.css" rel="stylesheet">
-<link href="https://vjs.zencdn.net/7.2.3/video-js.css" rel="stylesheet">
 {% endblock %}
 
 {% block content %}
@@ -21,16 +20,16 @@
             <h2 class="font20 m-b10">{{area.area_name}} 구역 상세</h2>
             <!-- Django 템플릿 코드 -->
             <div class="display-flex-top m-b10">
-                <div data-channel="{{ cctv.cctv_channel }}" class="imageBox subMainImageBox" style="position: relative;">
-                    <img id="4" class="testimg" src="/static/image/overlayphoto.jpeg">
-                </div>
-                <div data-channel="{{ cctv.cctv_channel }}" class="imageBox subMainImageBox" style="position: relative;">
-                    <img id="cctv_{{ cctv.cctv_channel }}" class="testimg testvis" src="/static/image/testcctvimg.png">
+                <div data-channel="{{ cctv.cctv_channel }}" class="imageBox subMainImageBox"
+                    style="position: relative;">
+                    <img id="cctv_{{ cctv.cctv_channel }}" class="testimg testvis testtest" src="">
                     <canvas id="drawCanvas" class="draw-canvas"></canvas>
                     <div class="button-container">
                         <button id="drawButton" class="btn">Draw</button>
                         <button id="doneButton" class="btn" disabled>Done</button>
                         <button id="deleteButton" class="btn" disabled>Delete</button>
+                        <button id="prevButton" class="btn">Prev</button>
+                        <button id="nextButton" class="btn">Next</button>
                     </div>
                 </div>
             </div>
@@ -43,12 +42,12 @@
                     <span id="current-time">15시 00분 33초</span>
                 </div>
             </div>
-            <div class="infoBox display-flex m-t20">
+            <!-- <div class="infoBox display-flex m-t20">
                 <div>
                     <p class="font14">위험도</p>
                     <span>1</span>
                 </div>
-            </div>
+            </div> -->
             <div class="infoBox display-flex m-t20">
                 <div>
                     <p class="font14" id="detected-people-count">감지된 사람 수</p>
@@ -57,17 +56,57 @@
             </div>
             <div class="infoBox display-flex m-t20">
                 <div>
-                    <p class="font14">구역 넓이</p>
-                    <span id = "grid-area">55,555m^2</span>
+                    <p class="font14">안전 범위</p>
+                    <span id="safespec">
+                        <div class="input-box display-flex m-t10">
+                            <input type="text" id="safeMin" class="input-wide">
+                            <div> ~ </div>
+                            <input type="text" id="safeMax" class="input-wide">
+                            <button id="safeButton" onclick="checkRange('safe')"></button>
+                        </div>
+                    </span>
                 </div>
             </div>
-
             <div class="infoBox display-flex m-t20">
+                <div>
+                    <p class="font14">주의 범위</p>
+                    <span id="cautiousspec">
+                        <div class="input-box display-flex m-t10">
+                            <input type="text" id="cautiousMin" class="input-wide">
+                            <div> ~ </div>
+                            <input type="text" id="cautiousMax" class="input-wide">
+                            <button id="cautiousButton" onclick="checkRange('cautious')"></button>
+                        </div>
+                    </span>
+                </div>
+            </div>
+            <div class="infoBox display-flex m-t20">
+                <div>
+                    <p class="font14">위험 범위</p>
+                    <span id="dangerspec">
+                        <div class="input-box display-flex m-t10">
+                            <input type="text" id="dangerMin" class="input-wide">
+                            <div> ~ </div>
+                            <input type="text" id="dangerMax" class="input-wide">
+                            <button id="dangerButton" onclick="checkRange('danger')"></button>
+                        </div>
+                    </span>
+                </div>
+            </div>
+            <div id="result"></div>
+            <!-- <div class="infoBox display-flex m-t20">
+                <div>
+                    <p class="font14">구역 넓이</p>
+                    <span id="grid-area">55,555m^2</span>
+                </div>
+            </div> -->
+
+            <!-- <div class="infoBox display-flex m-t20">
                 <div>
                     <p class="title font14">구역 인구 밀집도(제곱미터 당)</p>
                     <span>55,555명</span>
                 </div>
-            </div>
+            </div> -->
             <div class="infoBox display-flex m-t20">
                 <div>
                     <p class="font14">그리드 영역 내부 객체 수</p>
@@ -101,222 +140,371 @@
     });
 </script>
 
-<!-- 비디오 플레이어 설정 스크립트 -->
 <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        const videos = document.querySelectorAll(".video-js");
-        videos.forEach(videoElement => {
-            const player = videojs(videoElement);
-            player.ready(function () {
-                this.play();
-            });
-        });
-    });
+    $(document).ready(function () {
+        var imgcnt = 1;
+        var maxImages = 7;  // Static folder에 있는 이미지 파일 수
 
-    window.onload = function () {
-        const videos = document.querySelectorAll(".video-js");
-        videos.forEach(videoElement => {
-            const player = videojs(videoElement);
-            player.autoplay('muted');
-        });
-    };
-</script>
-
-<script>
-    $(document).ready(function() {
-        function UpdateLiveImage() {
+        function UpdateLiveImage(imgcnt) {
             $.ajax({
-                url: '/fetch-and-save-image/',
+                url: '/fetch-and-save-image/' + imgcnt + '/',
                 type: 'GET',
-                success: function(response) {
+                success: function (response) {
                     if (response.message === 'Image fetched and saved successfully') {
-                        var newSrc = '/static/image/testcctvimg.png?' + new Date().getTime();
-                        $('.testvis').attr('src', newSrc);
+                        var newSrc = '/static/image/' + imgcnt + '.jpg?timestamp=' + new Date().getTime();  // 캐시 방지
+                        $('.testvis').attr('src', newSrc).on('load', function () {
+                            setCanvasSize();
+                            updateGridObjectCount();  // 이미지 변경 후 객체 수 업데이트
+                        });
                         $('#areaData').text(response.object_count + '명');
                     } else {
                         console.error('Error:', response.error);
                     }
                 },
-                error: function(xhr, status, error) {
+                error: function (xhr, status, error) {
                     console.error('AJAX Error:', status, error);
                 }
             });
         }
-        
-        setInterval(UpdateLiveImage, 1000);
+        // 페이지 로드 시 UpdateLiveImage 호출
+        UpdateLiveImage(1);
+
+        // #nextButton 클릭 시 UpdateLiveImage 호출
+        $('#nextButton').click(function () {
+            alert("다음 테스트로 넘어갑니다.");
+            imgcnt++;
+            if (imgcnt > maxImages) {
+                imgcnt = 1;  // 첫 번째 이미지로 돌아갑니다.
+            }
+            UpdateLiveImage(imgcnt);
+        });
+        $('#prevButton').click(function () {
+            alert("이전 테스트로 돌아갑니다.");
+            imgcnt--;
+            if (imgcnt < 1) {
+                imgcnt = 7;  // 첫 번째 이미지로 돌아갑니다.
+            }
+            UpdateLiveImage(imgcnt);
+        });
+        function checkIfPointInPolygon(point, polygon) {
+            let x = point.x, y = point.y;
+            let inside = false;
+            for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+                let xi = polygon[i].x, yi = polygon[i].y;
+                let xj = polygon[j].x, yj = polygon[j].y;
+                let intersect = ((yi > y) !== (yj > y)) &&
+                    (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+                if (intersect) inside = !inside;
+            }
+            return inside;
+        }
+
+        function sendObjectCount(objectCount) {
+            $.ajax({
+                url: 'http://61.75.117.152:4567/gridppl',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ object_count: objectCount }),
+                success: function (response) {
+                    console.log('Success:', response);
+                },
+                error: function (xhr, status, error) {
+                    console.error('Error:', error);
+                }
+            });
+        }
+        function updateGridObjectCount(imgcnt) {
+            $.ajax({
+                url: 'http://61.75.117.152:4567/combined/' + imgcnt,
+                type: 'GET',
+                success: function (response) {
+                    if (response.data && response.data.objects) {
+                        let objectCount = 0;
+                        const polygon = points.map(p => ({ x: p.x, y: p.y }));
+
+                        // 이미지와 캔버스의 크기
+                        const imgWidth = $('.testtest')[0].naturalWidth;
+                        const imgHeight = $('.testtest')[0].naturalHeight;
+                        const canvasWidth = $('#drawCanvas').width();
+                        const canvasHeight = $('#drawCanvas').height();
+
+                        // 비율 계산
+                        const widthRatio = canvasWidth / imgWidth;
+                        const heightRatio = canvasHeight / imgHeight;
+
+                        for (let key in response.data.objects) {
+                            if (response.data.objects.hasOwnProperty(key)) {
+                                let position = response.data.objects[key];
+                                let x = position.x * widthRatio;
+                                let y = position.y * heightRatio;
+                                if (checkIfPointInPolygon({ x, y }, polygon)) {
+                                    objectCount++;
+                                }
+                            }
+                        }
+                        $('#grid-object-count').text(objectCount + '명');
+                        sendObjectCount(objectCount);
+                    } else {
+                        console.error('Error: Invalid response structure', response);
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.error('AJAX Error:', status, error);
+                }
+            });
+        }
+
+        let updateInterval;
+
+        // 기존 그리드 드로잉 코드
+        let drawing = false;
+        let gridExists = false;
+        let points = [];
+
+        const canvas = document.getElementById('drawCanvas');
+        const ctx = canvas.getContext('2d');
+        const img = document.getElementById('cctv_1');  // 처음에는 첫 번째 이미지로 설정
+
+        // 이미지 로드 완료 후 캔버스 크기 설정
+        img.onload = function () {
+            setCanvasSize();
+        };
+
+        // Set canvas size to match the image size
+        function setCanvasSize() {
+            canvas.width = img.clientWidth;
+            canvas.height = img.clientHeight;
+
+            // Adjust canvas position to overlay the image
+            canvas.style.position = 'absolute';
+            canvas.style.left = img.offsetLeft + 'px';
+            canvas.style.top = img.offsetTop + 'px';
+        }
+
+        // Initial button states
+        $('#drawButton').css('background-color', '#007bff').prop('disabled', false);
+        $('#doneButton').css('background-color', 'lightgray').prop('disabled', true);
+        $('#deleteButton').css('background-color', 'lightgray').prop('disabled', true);
+
+        // Draw button click event
+        $('#drawButton').click(function () {
+            if (gridExists) return;
+            drawing = true;
+            alert("그리드 영역 그리기를 시작합니다.");
+            $('#drawButton').css('background-color', 'lightgray').prop('disabled', true);
+            $('#doneButton').css('background-color', '#007bff').prop('disabled', false);
+        });
+
+        // Done button click event
+        $('#doneButton').click(function () {
+            if (points.length > 1) {
+                const firstPoint = points[0];
+                const lastPoint = points[points.length - 1];
+                ctx.beginPath();
+                ctx.moveTo(lastPoint.x, lastPoint.y);
+                ctx.lineTo(firstPoint.x, firstPoint.y);
+                ctx.strokeStyle = 'yellow';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                alert("그리드 영역 그리기가 완료되었습니다.");
+                gridExists = true;
+                $('#doneButton').css('background-color', 'lightgray').prop('disabled', true);
+                $('#deleteButton').css('background-color', '#007bff').prop('disabled', false);
+                updateGridObjectCount(imgcnt)
+            }
+            drawing = false;
+        });
+
+        // Delete button click event
+        $('#deleteButton').click(function () {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            points = [];
+            gridExists = false;
+            alert("그리드 영역을 삭제합니다.");
+            $('#deleteButton').css('background-color', 'lightgray').prop('disabled', true);
+            $('#drawButton').css('background-color', '#007bff').prop('disabled', false);
+
+            // 객체 수 초기화 및 업데이트 멈춤
+            $('#grid-object-count').text('0명');
+            sendObjectCount(0);
+            clearInterval(updateInterval);
+        });
+
+        // Mouse click event to draw points and lines
+        canvas.addEventListener('mousedown', (e) => {
+            if (!drawing) return;
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            if (points.length > 0) {
+                const lastPoint = points[points.length - 1];
+                ctx.beginPath();
+                ctx.moveTo(lastPoint.x, lastPoint.y);
+                ctx.lineTo(x, y);
+                ctx.strokeStyle = 'yellow';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            }
+
+            points.push({ x, y });
+        });
     });
 </script>
 
+
 <script>
-    $(document).ready(function() {
+let currentRangeType = 'safe';
+let previousRangeType = currentRangeType;
+let updateInterval;
+
+function determineRangeType(objectCount) {
+    let rangeType = '';
+
+    const safeMin = parseInt(document.getElementById('safeMin').value);
+    const safeMax = parseInt(document.getElementById('safeMax').value);
+    const cautiousMin = parseInt(document.getElementById('cautiousMin').value);
+    const cautiousMax = parseInt(document.getElementById('cautiousMax').value);
+    const dangerMin = parseInt(document.getElementById('dangerMin').value);
+    const dangerMax = parseInt(document.getElementById('dangerMax').value);
+
+    if (!isNaN(safeMin) && !isNaN(safeMax) && objectCount >= safeMin && objectCount <= safeMax) {
+        rangeType = 'safe';
+    } else if (!isNaN(cautiousMin) && !isNaN(cautiousMax) && objectCount >= cautiousMin && objectCount <= cautiousMax) {
+        rangeType = 'cautious';
+    } else if (!isNaN(dangerMin) && !isNaN(dangerMax) && objectCount >= dangerMin && objectCount <= dangerMax) {
+        rangeType = 'danger';
+    }
+
+    return rangeType;
+}
+
+function checkRange() {
+    let objectCount = parseInt(document.getElementById('grid-object-count').innerText);
+    let rangeType = determineRangeType(objectCount);
+    let resultText = '';
+
+    if (rangeType) {
+        resultText = `현재 객체 수 (${objectCount}명)는 현재 ${rangeType} 범위입니다.`;
+    } else {
+        resultText = `현재 객체 수 (${objectCount}명)는 어떤 범위에도 포함되지 않습니다.`;
+    }
+
+    document.getElementById('result').innerText = resultText;
+
+    if (rangeType !== previousRangeType) {
+        sendObjectCountWithRange(objectCount, rangeType);
+        previousRangeType = rangeType;
+    }
+}
+
+function sendObjectCountWithRange(objectCount, rangeType) {
+    let min, max;
+
+    switch(rangeType) {
+        case 'safe':
+            min = parseInt(document.getElementById('safeMin').value);
+            max = parseInt(document.getElementById('safeMax').value);
+            break;
+        case 'cautious':
+            min = parseInt(document.getElementById('cautiousMin').value);
+            max = parseInt(document.getElementById('cautiousMax').value);
+            break;
+        case 'danger':
+            min = parseInt(document.getElementById('dangerMin').value);
+            max = parseInt(document.getElementById('dangerMax').value);
+            break;
+        default:
+            return;
+    }
+
+    $.ajax({
+        url: 'http://61.75.117.152:4567/gridppl',
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({ object_count: objectCount, range_type: rangeType }),
+        success: function (response) {
+            console.log('Success:', response);
+        },
+        error: function (xhr, status, error) {
+            console.error('Error:', error);
+        }
+    });
+}
+
+function startRangeChecking() {
+    if (updateInterval) {
+        clearInterval(updateInterval);
+    }
+
+    updateInterval = setInterval(() => {
+        checkRange();
+    }, 500);
+}
+
+document.addEventListener("DOMContentLoaded", function() {
+    startRangeChecking();
+});
+
+</script>
+
+<script>
+    $(document).ready(function () {
         function UpdateTestImage() {
             var imageUrl = 'http://183.103.118.114:65402/Snapshot/1/RemoteImageCapture?ImageFormat=2?' + new Date().getTime();
             $('#4').attr('src', imageUrl);
         }
         setInterval(UpdateTestImage, 500);
     });
+
+    // $(document).ready(function() {
+    //     var cnt = 1;
+    //     $('#nextButton').click(function() {
+    //         alert("버튼이 클릭됨");
+    //         cnt++;
+    //         UpdateLiveImage(cnt);
+    //     });
+    //     function UpdateLiveImage() {
+    //         $.ajax({
+    //             url: '/fetch-and-save-image/',
+    //             type: 'GET',
+    //             success: function(response) {
+    //                 if (response.message === 'Image fetched and saved successfully') {
+    //                     var newSrc = '/static/image/' + cnt + '.jpg';
+    //                     $('.testvis').attr('src', newSrc);
+    //                     $('#areaData').text(response.object_count + '명');
+    //                 } else {
+    //                     console.error('Error:', response.error);
+    //                 }
+    //             },
+    //             error: function(xhr, status, error) {
+    //                 console.error('AJAX Error:', status, error);
+    //             }
+    //         });
+    //     }
+
+    //     // 페이지 로드 시 UpdateLiveImage 호출
+    //     UpdateLiveImage();
+
+    //     // #nextButton 클릭 시 UpdateLiveImage 호출
+    // });
+
+    // </script>
+//
+<script>
+    // $(document).ready(function() {
+    //     function UpdateTestImage() {
+    //         var imageUrl = 'http://183.103.118.114:65402/Snapshot/1/RemoteImageCapture?ImageFormat=2?' + new Date().getTime();
+    //         $('#4').attr('src', imageUrl);
+    //     }
+    //     setInterval(UpdateTestImage, 500);
+    // });
+
 </script>
 
 <script>
-    function checkIfPointInPolygon(point, polygon) {
-        let x = point.x, y = point.y;
-        let inside = false;
-        for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
-            let xi = polygon[i].x, yi = polygon[i].y;
-            let xj = polygon[j].x, yj = polygon[j].y;
-            let intersect = ((yi > y) !== (yj > y)) &&
-                (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
-            if (intersect) inside = !inside;
-        }
-        return inside;
-    }
 
-    function updateGridObjectCount() {
-        $.ajax({
-            url: 'http://61.75.117.152:4567/combined',
-            type: 'GET',
-            success: function(response) {
-                if (response.text) {
-                    let objectCount = 0;
-                    const polygon = points.map(p => ({x: p.x, y: p.y}));
-
-                    // 이미지와 캔버스의 크기
-                    const imgWidth = $('#cctv_{{ cctv.cctv_channel }}')[0].naturalWidth;
-                    const imgHeight = $('#cctv_{{ cctv.cctv_channel }}')[0].naturalHeight;
-                    const canvasWidth = $('#drawCanvas').width();
-                    const canvasHeight = $('#drawCanvas').height();
-
-                    // 비율 계산
-                    const widthRatio = canvasWidth / imgWidth;
-                    const heightRatio = canvasHeight / imgHeight;
-
-                    for (let key in response.text) {
-                        if (key.startsWith('Object')) {
-                            let position = response.text[key].match(/\((\d+),\s*(\d+)\)/);
-                            if (position) {
-                                let x = parseInt(position[1]) * widthRatio;
-                                let y = parseInt(position[2]) * heightRatio;
-                                if (checkIfPointInPolygon({x, y}, polygon)) {
-                                    objectCount++;
-                                }
-                            }
-                        }
-                    }
-                    $('#grid-object-count').text(objectCount + '명');
-                } else {
-                    console.error('Error:', response.error);
-                }
-            },
-            error: function(xhr, status, error) {
-                console.error('AJAX Error:', status, error);
-            }
-        });
-    }
-
-    let updateInterval;
-
-    // 기존 그리드 드로잉 코드
-    let drawing = false;
-    let gridExists = false;
-    let points = [];
-
-    const canvas = document.getElementById('drawCanvas');
-    const ctx = canvas.getContext('2d');
-    const img = document.getElementById('cctv_{{ cctv.cctv_channel }}');
-
-    // Set canvas size to match the image size
-    canvas.width = img.clientWidth;
-    canvas.height = img.clientHeight;
-
-    // Adjust canvas position to overlay the image
-    canvas.style.position = 'absolute';
-    canvas.style.left = img.offsetLeft + 'px';
-    canvas.style.top = img.offsetTop + 'px';
-
-    // Initial button states
-    $('#drawButton').css('background-color', '#007bff').prop('disabled', false);
-    $('#doneButton').css('background-color', 'lightgray').prop('disabled', true);
-    $('#deleteButton').css('background-color', 'lightgray').prop('disabled', true);
-
-    // Draw button click event
-    $('#drawButton').click(function() {
-        if (gridExists) return;
-        drawing = true;
-        alert("그리드 영역 그리기를 시작합니다.");
-        $('#drawButton').css('background-color', 'lightgray').prop('disabled', true);
-        $('#doneButton').css('background-color', '#007bff').prop('disabled', false);
-    });
-
-    // Done button click event
-    $('#doneButton').click(function() {
-        if (points.length > 1) {
-            const firstPoint = points[0];
-            const lastPoint = points[points.length - 1];
-            ctx.beginPath();
-            ctx.moveTo(lastPoint.x, lastPoint.y);
-            ctx.lineTo(firstPoint.x, firstPoint.y);
-            ctx.strokeStyle = 'yellow';
-            ctx.lineWidth = 2;
-            ctx.stroke();
-
-            // Prompt the user for the real area size
-            let realArea = prompt("해당 영역의 실면적을 입력해주세요. (m^2)");
-
-            if (realArea) {
-                // Update the area size in the UI
-                $('#grid-area').text(realArea + 'm^2');
-                alert("그리드 영역 그리기가 완료되었습니다.");
-                gridExists = true;
-                $('#doneButton').css('background-color', 'lightgray').prop('disabled', true);
-                $('#deleteButton').css('background-color', '#007bff').prop('disabled', false);
-
-                // 실시간 객체 수 업데이트 시작
-                updateInterval = setInterval(updateGridObjectCount, 1000);
-            } else {
-                alert("실면적을 입력하지 않았습니다. 그리드 영역 그리기가 취소되었습니다.");
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                points = [];
-                drawing = false;
-                $('#doneButton').css('background-color', 'lightgray').prop('disabled', true);
-                $('#drawButton').css('background-color', '#007bff').prop('disabled', false);
-            }
-        }
-        drawing = false;
-    });
-
-    // Delete button click event
-    $('#deleteButton').click(function() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        points = [];
-        gridExists = false;
-        alert("그리드 영역을 삭제합니다.");
-        $('#deleteButton').css('background-color', 'lightgray').prop('disabled', true);
-        $('#drawButton').css('background-color', '#007bff').prop('disabled', false);
-
-        // 객체 수 초기화 및 업데이트 멈춤
-        $('#grid-object-count').text('0명');
-        clearInterval(updateInterval);
-    });
-
-    // Mouse click event to draw points and lines
-    canvas.addEventListener('mousedown', (e) => {
-        if (!drawing) return;
-        const rect = canvas.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-
-        if (points.length > 0) {
-            const lastPoint = points[points.length - 1];
-            ctx.beginPath();
-            ctx.moveTo(lastPoint.x, lastPoint.y);
-            ctx.lineTo(x, y);
-            ctx.strokeStyle = 'yellow';
-            ctx.lineWidth = 2;
-            ctx.stroke();
-        }
-
-        points.push({ x, y });
-    });
 </script>
 
 {% endblock %}

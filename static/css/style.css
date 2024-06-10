@@ -1,3 +1,5 @@
+
+
 body {
     min-width: 1080px;
     margin: 0;
@@ -27,6 +29,10 @@ button {
     align-items: center;
     justify-content: space-between;
 }
+.row-align{
+    display:flex;
+    text-align: center;
+}
 .display-flex-top {
     display: flex;
     align-items: start;
@@ -37,6 +43,9 @@ button {
 }
 .m-t20 {
     margin-top: 20px;
+}
+.m-t10 {
+    margin-top: 10px;
 }
 .m-r16 {
     margin-right: 16px;
@@ -165,7 +174,7 @@ button {
     height: 420px;
 }
 .subMainImageBox {
-    width: calc((100% - 12px) / 2);
+    width: calc((100% - 12px));
     height: 500px;
 }
 /* imageBox end */
