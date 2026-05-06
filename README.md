@@ -27,6 +27,26 @@ This project aims to **quantitatively assess crowd density in real time** and pr
 
 ---
 
+## 📸 Screenshots
+
+### Simulated CCTV Feed
+
+![Outdoor CCTV crowd feed](docs/screenshots/cctv-plaza-feed.png)
+
+### Dashboard Overview
+
+![CCTV monitoring home page](docs/screenshots/cctv-home.png)
+
+### Area Monitoring
+
+![CCTV area page](docs/screenshots/cctv-area.png)
+
+### Detailed CCTV View
+
+![CCTV detail page](docs/screenshots/cctv-detail.png)
+
+---
+
 ## ⚙️ How It Works
 
 1. **RTSP CCTV Streaming**
